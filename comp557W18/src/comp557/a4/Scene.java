@@ -24,6 +24,10 @@ public class Scene {
 	public double k_a = 0.8;
 	public double k_d = 1.0;
 	public double k_s = 1.0;
+	
+	public int noise_height 	= 128;
+	public int noise_width 	= 128;
+	public double[][] noise = new double[noise_height][noise_width];
     
     /** List of surfaces in the scene */
     public List<Intersectable> surfaceList = new ArrayList<Intersectable>();
@@ -74,46 +78,63 @@ public class Scene {
         
         render.init(w, h, showPanel);
         
-        // Loop through each pixel p_i = (i,j)
-        for ( int i = 0; i < h && !render.isDone(); i++ ) {
-            for ( int j = 0; j < w && !render.isDone(); j++ ) {
-          //for ( int i = 4; i < 5; i++ ) {
-                //for ( int j = 0; j < 1; j++ ) {
-            	
-            		r = g = b = 0;
-            		for( int k = 0; k < render.samples; k++) {
-            			
-            			if(render.samples == 1) {
-            				offset = new double[] {0.0, 0.0};
-            			}
-            			else {
-            				offset = fuzzyGridDistribution(k, render.samples);
-            			}
-            			
-            			// Cast Ray
-                		generateRay(i, j, offset, cam, ray);
-                		color = cast(ray, old_color, 0);
-                		r += color[0];
-                		g += color[1];
-                		b += color[2];
-            		}//k-loop
-                	
-            		// Cap at white to prevent RGB overflow
-            		r = Math.min(255, r/render.samples);
-            		g = Math.min(255, g/render.samples);
-            		b = Math.min(255, b/render.samples);
-                		            		
-            		// Update the render image
-                	alpha = (argb<<24 | (int)r<<16 | (int)g<<8 | (int)b); 
-            		render.setPixel(j, i, alpha);
-            }//j-loop
-        } //i-loop
+        //Generate a noise array
+        generateNoise();
+        
+        
+        
+        boolean go_on = true;
+        if(go_on == true) {
+	        // Loop through each pixel p_i = (i,j)
+	        for ( int i = 0; i < h && !render.isDone(); i++ ) {
+	            for ( int j = 0; j < w && !render.isDone(); j++ ) {
+	            		
+	            		r = g = b = 0;
+	            		for( int k = 0; k < render.samples; k++) {
+	            			
+	            			if(render.samples == 1) {
+	            				offset = new double[] {0.0, 0.0};
+	            			}
+	            			else {
+	            				offset = fuzzyGridDistribution(k, render.samples);
+	            			}
+	            			
+	            			// Cast Ray
+	                		generateRay(i, j, offset, cam, ray);
+	                		color = cast(ray, old_color, 0, i, j);
+	                		r += color[0];
+	                		g += color[1];
+	                		b += color[2];
+	            		}//k-loop
+	                	
+	            		// Cap at white to prevent RGB overflow
+	            		r = Math.min(255, r/render.samples);
+	            		g = Math.min(255, g/render.samples);
+	            		b = Math.min(255, b/render.samples);
+	                		            		
+	            		// Update the render image
+	                	alpha = (argb<<24 | (int)r<<16 | (int)g<<8 | (int)b); 
+	            		render.setPixel(j, i, alpha);
+	            }//j-loop
+	        } //i-loop
+        }
+        else {
+	        	for ( int i = 0; i < h && !render.isDone(); i++ ) {
+	        		for ( int j = 0; j < w && !render.isDone(); j++ ) {
+	        			double temp = 0.07*(i+j) + 9.0*turbulence(i,j,32)/255;
+	        			color[0] = color[1] = color[2] = 255 * Math.abs(Math.sin(temp));
+	        			
+	        			alpha = (argb<<24 | (int)color[0]<<16 | (int)color[1]<<8 | (int)color[2]); 
+	        			render.setPixel(j, i, alpha);
+		        }    
+	        	}
+        }
         render.save();
         render.waitDone();
     }//render
     
     // A recursive cast method
-    public double[] cast(Ray ray, double[] old_color, int depth) {
+    public double[] cast(Ray ray, double[] old_color, int depth, int x, int y) {
     			
 		// Variable declarations
     		int max_depth 							= 5;
@@ -138,7 +159,7 @@ public class Scene {
 				// Cast a reflection_ray;
 				Ray reflection_ray = new Ray();
 				generateReflectionRay(reflection_ray, closest_result);
-				reflected_color=cast(reflection_ray, color, depth+1);
+				reflected_color=cast(reflection_ray, color, depth+1, x, y);
 	    			
 		    		// For all lights
 		    		for(int i = 0; i < this.lights.size(); i++) {
@@ -153,7 +174,7 @@ public class Scene {
 					specular	 = calculateSpecular	(light, closest_result, shadow);
 					
 					// Set the color in regards to the closest objects
-					nonreflected_color = setColor(closest_result, light, shadow, diffuse, specular);
+					nonreflected_color = setColor(closest_result, light, shadow, diffuse, specular, x, y);
 					
 					// Take the maximum of each RGB component between the non-reflected color, and the scaled reflected color
 					color[0] += Math.max(nonreflected_color[0], closest_result.material.reflectiveness*reflected_color[0]);
@@ -309,26 +330,53 @@ public class Scene {
 	}
 	
 	// Calculate the color for a given intersection
-	public double[] setColor(IntersectResult closest_result, Light light, int shadow, double diffuse, double specular) {
+	public double[] setColor(IntersectResult closest_result, Light light, int shadow, double diffuse, double specular, int i, int j) {
 		double[] color = new double[3];
+		float[] granite_color = new float[3];
+		float r, g, b;
 		
 		if(closest_result.t == Double.POSITIVE_INFINITY) {
 			color[0] = 255*this.k_a*ambient.x/this.lights.size();
 			color[1] = 255*this.k_a*ambient.y/this.lights.size();
 			color[2] = 255*this.k_a*ambient.z/this.lights.size();
 		}
-		else {			
-			color[0] = 	255 * (	this.k_a *ambient.x	* light.color.x * closest_result.material.diffuse.x 	
-								+ shadow *(diffuse	* light.color.x * closest_result.material.diffuse.x
+		else {	
+			
+			if(closest_result.material.name.equals("granite")) {
+				granite_color = makeGranite(closest_result, 0.08, i, j);
+					color[0] = 255 * (	this.k_a *ambient.x	* light.color.x * granite_color[0] 	
+										+ shadow *(diffuse	* light.color.x * granite_color[0]
 										+ specular	* light.color.x * closest_result.material.specular.x)); 
-	
-			color[1] = 	255 * (	this.k_a *ambient.y* light.color.y * closest_result.material.diffuse.y 	
-								+ shadow *(diffuse	* light.color.y * closest_result.material.diffuse.y
-										+ specular	* light.color.y * closest_result.material.specular.y));
-	
-			color[2] = 	255 * ( this.k_a *ambient.z	* light.color.z * closest_result.material.diffuse.z 	
-								+ shadow *(diffuse	* light.color.z * closest_result.material.diffuse.z
-										+ specular	* light.color.z * closest_result.material.specular.z));
+					color[1] = 255*granite_color[1]*diffuse;
+					color[2] = 255*granite_color[2]*diffuse;
+			}
+			
+			if(closest_result.material.name.equals("granite")) {
+				granite_color = makeGranite(closest_result, 0.08, i, j);
+				r = granite_color[0];
+				g = granite_color[1];
+				b = granite_color[2];
+			}
+			
+			
+			else {
+				r = closest_result.material.diffuse.x;
+				g = closest_result.material.diffuse.y;
+				b = closest_result.material.diffuse.z;
+			}
+			
+			color[0] = 	255 * (	this.k_a *ambient.x	* light.color.x * r 	
+							+ shadow *(diffuse	* light.color.x * r
+							+ specular	* light.color.x * closest_result.material.specular.x)); 
+		
+			color[1] = 	255 * (	this.k_a *ambient.y* light.color.y * g 	
+							+ shadow *(diffuse	* light.color.y * g
+							+ specular	* light.color.y * closest_result.material.specular.y));
+		
+			color[2] = 	255 * ( this.k_a *ambient.z	* light.color.z * b 	
+							+ shadow *(diffuse	* light.color.z * b
+							+ specular	* light.color.z * closest_result.material.specular.z));
+			
 		}
 		return color;
 	}
@@ -394,6 +442,17 @@ public class Scene {
      *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      */
 
+	public float[] makeGranite(IntersectResult closest_result, double num_stripes, int i, int j) {
+		float[] granite_color = new float[3];	
+		
+		float temp = (float) (num_stripes*(i+j) + closest_result.material.turbulence*turbulence(i,j,32)/255);
+		granite_color[0] = (float) (closest_result.material.diffuse.x*Math.abs(Math.sin(temp)));
+		granite_color[1] = (float) (closest_result.material.diffuse.y*Math.abs(Math.sin(temp)));
+		granite_color[2] = (float) (closest_result.material.diffuse.z*Math.abs(Math.sin(temp)));
+						
+		return granite_color;
+	}
+	
 	// Find if something is in a shadow
 	public int inShadow(final Light light, IntersectResult shadowResult, Ray shadowRay) {
 		int in_shadow = 1;
@@ -456,12 +515,7 @@ public class Scene {
 				
 				// find its closest child
 				for(int j = 0; j < node.children.size(); j++) {
-					
-					
-					//System.out.println(i + "," + j);
-					//System.out.println(min_t);
-					//System.out.println();
-					
+										
 					child = node.children.get(j);
 					child.intersect(ray, result);
 					
@@ -475,12 +529,53 @@ public class Scene {
 					}
 				}
 				if(min_t == temp) {
-					//closest_result.t = Double.POSITIVE_INFINITY;
 					break;
 				}
 			}
 		}
-		
 		return closest_result;
+	}
+	
+	public double smoothNoise(double x, double y){
+	   //get fractional part of x and y
+	   double fractX = x - (int)x;
+	   double fractY = y - (int)y;
+
+	   //wrap around
+	   int x1 = ( (int)x + this.noise_width) % this.noise_width;
+	   int y1 = ( (int)y + this.noise_height) % this.noise_height;
+
+	   //neighbor values
+	   int x2 = (x1 + this.noise_width - 1) % this.noise_width;
+	   int y2 = (y1 + this.noise_height - 1) % this.noise_height;
+
+	   //smooth the noise with bilinear interpolation
+	   double value = 0.0;
+	   value += fractX     * fractY     * noise[y1][x1];
+	   value += (1 - fractX) * fractY     * noise[y1][x2];
+	   value += fractX     * (1 - fractY) * noise[y2][x1];
+	   value += (1 - fractX) * (1 - fractY) * noise[y2][x2];
+
+	   return value;
+	}
+	
+	public void generateNoise(){
+		for (int y = 0; y < this.noise_height; y++) {
+			  for (int x = 0; x < this.noise_width; x++) {
+			    noise[y][x] = Math.random();
+			  }
+		}
+	}
+	
+	double turbulence(double x, double y, double size) {
+		double value = 0.0;
+		double initialSize = size;
+
+		while(size >= 1){
+			value += smoothNoise(x/size, y/size)*size;
+		    size /= 2.0;
+		}
+	
+		return(128.0 * value / initialSize);
 	}
 }

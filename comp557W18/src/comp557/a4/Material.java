@@ -36,10 +36,7 @@ public class Material {
     /** How mirror like */ 
     public float reflectiveness = 0;
     
-    /** How mirror like */ 
-    public String pattern = "none";
-    
-    /** How mirror like */ 
+    /** How wiggly */ 
     public float turbulence = 0;
  
     /**

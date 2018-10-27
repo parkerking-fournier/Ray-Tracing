@@ -295,13 +295,9 @@ public class Parser {
 		    	if ( reflectivenessAttr != null ) {
 		    		material.reflectiveness = Float.parseFloat( reflectivenessAttr.getNodeValue() );
 		    	}
-		    Node patternAttr = dataNode.getAttributes().getNamedItem("pattern");
-		    	if ( patternAttr != null ) {
-			    		material.pattern = patternAttr.getNodeValue();
-		    	}
 		    	Node turbulenceAttr = dataNode.getAttributes().getNamedItem("turbulence");
 		    	if ( turbulenceAttr != null ) {
-			    		material.turbulence = Float.parseFloat( reflectivenessAttr.getNodeValue() );
+			    		material.turbulence = Float.parseFloat( turbulenceAttr.getNodeValue() );
 		    	}
 		}
 		return material;

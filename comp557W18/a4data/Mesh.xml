@@ -13,13 +13,6 @@
     power = "0.5" 
     type  = "point" />
 
-  <light 
-    name  = "light1" 
-    color = "1 1 0.9"      
-    from  = "0 5 -5" 
-    power = "0.5" 
-    type  = "point" /> 
-
   <!--_______________________________________________________________________________________________________-->
   <!--_______________________________________________________________________________________________________-->  
   <!--_____________________________________________COLORS____________________________________________________-->
@@ -240,15 +233,15 @@
   <!--_________________________________________RENDER CONFIGURATIONS_________________________________________-->
   <!--_______________________________________________________________________________________________________-->
   <!--_______________________________________________________________________________________________________-->
-  <render bgcolor="0 0 0" output="TwoSpheresPlane.png" samples="16" >
+  <render bgcolor="0 0 0" output="TwoSpheresPlane.png" samples="1" >
     <camera 
       name    = "myCamera" 
       from    = "0 4 10" 
       to      = "0 0 0" 
       up      = "0 1 0" 
       fovy    = "45" 
-      width   = "700" 
-      height  = "400" />
+      width   = "500" 
+      height  = "300" />
   </render> 
  
   <!--_______________________________________________________________________________________________________-->
@@ -257,54 +250,16 @@
   <!--_______________________________________________________________________________________________________-->
   <!--_______________________________________________________________________________________________________-->
    <node name="root" >
-    <sphere center="-3 1 -0.5" radius="1" >
-      <material   ref="silver" />
-    </sphere>
-
-    <sphere center="2.2 1 3.0" radius="1.0" >
-      <material   ref="water" />
-    </sphere>
   
-    <plane coeffs="0 1 0 0" >
+     <!-- <plane coeffs="0 1 0 0" >
       <material   ref="grey" />
       <material2  ref="light_blue" />
-    </plane> 
+    </plane>  -->
+
+    <mesh name="myTorus" filename="a4data/torus.obj" translation="0 1 0" rotation="90 0 0">
+      <material ref="red" />
+    </mesh>
    
-    <node name="box1" translation="3.3 0 -1.2" rotation="0 125 0" scale="2.0 1.6 0.5" >
-      <box min="-1 0 -1" max="1 2 1">
-        <material ref="gold" />
-      </box>
-    </node>
-
-     <node name="box2" translation="994.5 0 -1012" rotation="0 0 0" scale="1000.0 1.0 1000.0" >
-      <box min="-1 0 -1" max="1 2 1">
-        <material ref="clear_red" />
-      </box>
-    </node>
-
-     <node name="box3" translation="-1005.5 0 -100" rotation="0 0 0" scale="1000.0 1.0 1000.0" >
-      <box min="-1 0 -1" max="1 2 1">
-        <material ref="clear_red" />
-      </box>
-    </node>
-
-    <node name="boxStack" rotation="0 30 0" translation="0 0 1" >
-      <node name="box4" >
-        <box min="-1 0 -1" max="1 2 1">
-          <material ref="lavender" />
-        </box>
-        <node name="box5" translation="0 2 0" rotation="0 12 0" scale="0.5 0.5 0.5" >
-          <box min="-1 0 -1" max="1 2 1">
-            <material ref="grey_granite" />
-          </box>
-          <node name="box6" translation="0 2 0.2" rotation="0 -15 0" scale="0.5 0.5 0.5" >
-            <box min="-1 0 -1" max="1 2 1">
-              <material ref="light_green" />
-            </box>
-          </node>
-        </node>
-      </node>
-    </node>
   </node>
 
 </scene>

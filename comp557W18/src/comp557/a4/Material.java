@@ -9,7 +9,6 @@ package comp557.a4;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.vecmath.Color4f;
 
 /**
@@ -36,8 +35,17 @@ public class Material {
     /** How mirror like */ 
     public float reflectiveness = 0;
     
+    /** How see through */
+    public float ior = 0;
+    
+    /** How see through */
+    public float refractiveness = 0;
+    
     /** How wiggly */ 
     public float turbulence = 0;
+    
+    /** Material name */
+    public String pattern = "none";
  
     /**
      * Default constructor

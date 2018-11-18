@@ -1,14 +1,10 @@
 package comp557.a4;
 
 /**
- *	COMP 557 - Winter 2018
- *	Assignment 4
- *	Parker King-Fournier
- *	260556983
+ *	@author parkerkingfournier
  */
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,13 +48,6 @@ public class Scene {
      *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~RENDER METHODS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     *  
-     *  
-     *  The following methods render various scenes from the a4data directory
-     *  		
-     *  		render():			A general render method that will render any scene 
-     *  
-     *  @author parkerkingfournier
      */
     
     // Render the scene using Ray Tracing
@@ -81,54 +70,33 @@ public class Scene {
         //Generate a noise array
         generateNoise();
         
-        
-        
-        boolean go_on = true;
-        if(go_on == true) {
-	        // Loop through each pixel p_i = (i,j)
-	        for ( int i = 0; i < h && !render.isDone(); i++ ) {
-	            for ( int j = 0; j < w && !render.isDone(); j++ ) {
-	            		
-	            		r = g = b = 0;
-	            		for( int k = 0; k < render.samples; k++) {
+	    // Loop through each pixel p_i = (i,j)
+	    for ( int i = 0; i < h && !render.isDone(); i++ ) {
+	        for ( int j = 0; j < w && !render.isDone(); j++ ) {	
+	            r = g = b = 0;
+	            	for( int k = 0; k < render.samples; k++) {
 	            			
-	            			if(render.samples == 1) {
-	            				offset = new double[] {0.0, 0.0};
-	            			}
-	            			else {
-	            				offset = fuzzyGridDistribution(k, render.samples);
-	            			}
-	            			
-	            			// Cast Ray
-	                		generateRay(i, j, offset, cam, ray);
-	                		color = cast(ray, old_color, 0, i, j);
-	                		r += color[0];
-	                		g += color[1];
-	                		b += color[2];
-	            		}//k-loop
+	            		// Super sampling
+	            		offset = fuzzyGridDistribution(k, render.samples, i, j, k);
+	       
+	            		// Cast Ray
+	                	generateRay(i, j, offset, cam, ray);
+	                	color = cast(ray, old_color, 0, i, j);
+	                	r += color[0];
+	                	g += color[1];
+	                	b += color[2];
+	            	}//k-loop
 	                	
-	            		// Cap at white to prevent RGB overflow
-	            		r = Math.min(255, r/render.samples);
-	            		g = Math.min(255, g/render.samples);
-	            		b = Math.min(255, b/render.samples);
+	            	// Cap at white to prevent RGB overflow
+	            	r = Math.min(255, r/render.samples);
+	            	g = Math.min(255, g/render.samples);
+	            	b = Math.min(255, b/render.samples);
 	                		            		
-	            		// Update the render image
-	                	alpha = (argb<<24 | (int)r<<16 | (int)g<<8 | (int)b); 
-	            		render.setPixel(j, i, alpha);
+	            	// Update the image pixel
+	            alpha = (argb<<24 | (int)r<<16 | (int)g<<8 | (int)b); 
+	            	render.setPixel(j, i, alpha);
 	            }//j-loop
 	        } //i-loop
-        }
-        else {
-	        	for ( int i = 0; i < h && !render.isDone(); i++ ) {
-	        		for ( int j = 0; j < w && !render.isDone(); j++ ) {
-	        			double temp = 0.07*(i+j) + 9.0*turbulence(i,j,32)/255;
-	        			color[0] = color[1] = color[2] = 255 * Math.abs(Math.sin(temp));
-	        			
-	        			alpha = (argb<<24 | (int)color[0]<<16 | (int)color[1]<<8 | (int)color[2]); 
-	        			render.setPixel(j, i, alpha);
-		        }    
-	        	}
-        }
         render.save();
         render.waitDone();
     }//render
@@ -137,13 +105,16 @@ public class Scene {
     public double[] cast(Ray ray, double[] old_color, int depth, int x, int y) {
     			
 		// Variable declarations
-    		int max_depth 							= 5;
+    		int max_depth 							= 1;
     		int shadow 								= 1;
     		double[] color 							= new double[] {0.0,0.0,0.0};
     		double[] reflected_color  				= new double[] {0.0,0.0,0.0};
-    		double[] nonreflected_color 				= new double[] {0.0,0.0,0.0};
+    		double[] refracted_color  				= new double[] {0.0,0.0,0.0};
+    		double[] object_color 					= new double[] {0.0,0.0,0.0};
     		double 	diffuse, specular;
     				diffuse = specular  				= 0.0;
+    		double 	fresnel_reflected				= 1.0;
+    		double 	fresnel_refracted				= 0.0;
     		Light light;
     		Ray shadow_ray							= new Ray();
     		IntersectResult shadow_result			= new IntersectResult();
@@ -154,45 +125,180 @@ public class Scene {
 	    		// Find closest intersection
 	    		IntersectResult closest_result = findClosestIntersection(ray);
 	    		
-	    		if(closest_result.t != Double.POSITIVE_INFINITY) {
-	    			
-				// Cast a reflection_ray;
-				Ray reflection_ray = new Ray();
-				generateReflectionRay(reflection_ray, closest_result);
-				reflected_color=cast(reflection_ray, color, depth+1, x, y);
-	    			
+	    		if(closest_result.t != Double.POSITIVE_INFINITY) {	  
+		    		
+	    			//light = this.lights.get("light0");
+	    			//diffuse = calculateDiffuse(light, closest_result);
+	    			//color[0] = 255*closest_result.material.diffuse.x * diffuse + this.k_a* this.ambient.x;
+		    		//color[1] = 255*closest_result.material.diffuse.y * diffuse + this.k_a* this.ambient.y;
+		    		//color[2] = 255*closest_result.material.diffuse.z * diffuse + this.k_a* this.ambient.z;
+
 		    		// For all lights
 		    		for(int i = 0; i < this.lights.size(); i++) {
 		    			light = this.lights.get("light" + i);
 		    			
-		    			// Shadows
-		    			generateShadowRay(shadow_ray, closest_result.p, light); 
-					shadow = inShadow(light, shadow_result, shadow_ray);
+		    			// Cast a reflection_ray;
+					//Ray reflection_ray = new Ray();
+					//generateReflectionRay(reflection_ray, closest_result);
+					//reflected_color=cast(reflection_ray, color, depth+1, x, y);
+					
+					// Cast a refraction_ray;
+					//Ray refraction_ray = new Ray();
+					//generateRefractionRay(ray, refraction_ray, closest_result);
+					//refracted_color=cast(refraction_ray, color, depth+1, x, y);
+		    			
+		    			// Cast a shadow_ray;
+		    			//generateShadowRay(shadow_ray, closest_result.p, light); 
+					//shadow = inShadow(light, shadow_result, shadow_ray);
 		    		
 					// Calculate diffuse and specular lighting components
-					diffuse	 = calculateDiffuse	(light, closest_result, shadow);
+					diffuse	 = calculateDiffuse	(light, closest_result);
 					specular	 = calculateSpecular	(light, closest_result, shadow);
 					
-					// Set the color in regards to the closest objects
-					nonreflected_color = setColor(closest_result, light, shadow, diffuse, specular, x, y);
+					// Calculate the fresnel coefficient for the intersection
+					//fresnel_reflected = calculateFresnel(ray, closest_result);
+					//fresnel_refracted = 1 - fresnel_refracted;
 					
-					// Take the maximum of each RGB component between the non-reflected color, and the scaled reflected color
-					color[0] += Math.max(nonreflected_color[0], closest_result.material.reflectiveness*reflected_color[0]);
-					color[1] += Math.max(nonreflected_color[1], closest_result.material.reflectiveness*reflected_color[1]);
-					color[2] += Math.max(nonreflected_color[2], closest_result.material.reflectiveness*reflected_color[2]);
+					// Find the color of the closest object
+					object_color = setColor(closest_result, light, shadow, diffuse, specular, x, y);
+					
+					// Combine the object color, reflected color, and the scaled refracted color
+					color[0] += (fresnel_refracted)	*	(closest_result.material.refractiveness)*refracted_color[0] + 
+								(fresnel_reflected)	*	(closest_result.material.reflectiveness)*reflected_color[0] + 
+								(fresnel_reflected) * 	(1-closest_result.material.reflectiveness)*object_color[0];
+					
+					color[1] += (fresnel_refracted)	*	(closest_result.material.refractiveness)*refracted_color[1] + 
+								(fresnel_reflected)	*	(closest_result.material.reflectiveness)*reflected_color[1] + 
+								(fresnel_reflected) * 	(1-closest_result.material.reflectiveness)*object_color[1];
+					
+					color[2] += (fresnel_refracted)	*	(closest_result.material.refractiveness)*refracted_color[2] + 
+								(fresnel_reflected)	*	(closest_result.material.reflectiveness)*reflected_color[2] + 
+								(fresnel_reflected) * 	(1-closest_result.material.reflectiveness)*object_color[2];
+
+					
 		    		}
 		    		color[0] /= this.lights.size();
 		    		color[1] /= this.lights.size();
-		    		color[2] /= this.lights.size();
+	    		}
+	    		else {
+	    			color = new double[] {this.ambient.x, this.ambient.y, this.ambient.z };
 	    		}
     		}
     		else {
     			color = new double[] {this.ambient.x, this.ambient.y, this.ambient.z };
     		}
     		return color;
-    }//end-cast
+    }
     
-    
+    		
+	/**
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~~~COLOR AND SHADING METHODS~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
+     */
+	// Calculate the color for a given intersection
+	public double[] setColor(IntersectResult closest_result, Light light, int shadow, double diffuse, double specular, int i, int j) {
+		float[] 	 rgb 	= new float[3];
+		double[] color	 = new double[3];
+		
+		if(closest_result.t == Double.POSITIVE_INFINITY) {
+			color = new double[] {255*this.k_a*ambient.x/this.lights.size(), 255*this.k_a*ambient.x/this.lights.size(), 255*this.k_a*ambient.x/this.lights.size()};
+		}
+		else	 if(closest_result.material.pattern.equals("granite")) {
+			rgb = makeGranite(closest_result, 0.08, i, j);
+		}
+		else	 if(closest_result.material.pattern.equals("sine")) {
+			rgb = makeSine(closest_result, 0.08);
+		}
+		else{
+			rgb = new float[] {closest_result.material.diffuse.x, closest_result.material.diffuse.y, closest_result.material.diffuse.z};
+		}
+			
+			color[0] = 	255 * (	this.k_a *this.ambient.x	* light.color.x * rgb[0] 	
+							+ shadow *(diffuse	* light.color.x * rgb[0] 
+							+ specular	* light.color.x * closest_result.material.specular.x)); 
+		
+			color[1] = 	255 * (	this.k_a *this.ambient.y* light.color.y * rgb[1] 	
+							+ shadow *(diffuse	* light.color.y * rgb[1] 
+							+ specular	* light.color.y * closest_result.material.specular.y));
+		
+			color[2] = 	255 * ( this.k_a *this.ambient.z	* light.color.z * rgb[2]  	
+							+ shadow *(diffuse	* light.color.z * rgb[2] 
+							+ specular	* light.color.z * closest_result.material.specular.z));
+			
+		return color;
+	}
+	
+	public double calculateDiffuse(Light light, IntersectResult closest_result) {
+		double diffuse 	= 0;
+		if(light != null) {
+			Vector3d to_light = new Vector3d(	light.from.x - closest_result.p.x,
+												light.from.y - closest_result.p.y,
+												light.from.z - closest_result.p.z	);
+			to_light.normalize();
+			diffuse 	= (this.k_d *light.power*Math.max(0, closest_result.n.dot(to_light)));
+		}
+		return diffuse;
+	}
+	
+	public double calculateSpecular(Light light, IntersectResult closest_result, int shadow) {
+		double specular 	= 0.0;
+		
+		if(light != null) {
+			Vector3d from_light = new Vector3d(	light.from.x - closest_result.p.x,
+												light.from.y - closest_result.p.y,
+												light.from.z - closest_result.p.z	);
+				from_light.scale(-1);
+				from_light.normalize();
+			
+			Vector3d to_camera = new Vector3d(render.camera.from);
+				to_camera.sub(closest_result.p);
+				to_camera.normalize();
+				
+			Vector3d reflection_vector = new Vector3d(closest_result.n);
+				reflection_vector.scale(-2.0*from_light.dot(closest_result.n));
+				reflection_vector.add(from_light);
+				reflection_vector.normalize();
+			
+			if(closest_result.material != null)
+				{specular = (this.k_s * light.power * Math.pow(Math.max(0, to_camera.dot(reflection_vector)), closest_result.material.shinyness));}
+			else 
+				{specular = 0;}
+		}
+		return specular;
+	}
+	
+	public double calculateFresnel(Ray ray, IntersectResult closest_result){
+		double k_r 		= 0.0;
+		
+		float etai 		= 1;
+		float etat 		= closest_result.material.ior; 
+		double cos_i 	= ray.viewDirection.dot(closest_result.n);
+		double sin_t = (etai/etat) * Math.sqrt(Math.max(0.0, 1-cos_i*cos_i)); 
+		
+		if(cos_i > 0) {
+			etai 	= closest_result.material.ior;
+			etat 	= 1; 
+		}
+		
+		if(sin_t >= 1) {
+			k_r = 1;
+		}
+		else { 
+	        double cost = Math.sqrt(Math.max(0.0, 1-sin_t*sin_t)); 
+	        cos_i = Math.abs(cos_i); 
+	        double Rs = ((etat * cos_i) - (etai * cost)) / ((etat * cos_i) + (etai * cost)); 
+	        double Rp = ((etai * cos_i) - (etat * cost)) / ((etai * cos_i) + (etat * cost)); 
+	        k_r = (Rs * Rs + Rp * Rp) / 2; 
+	    }
+		
+		
+		return k_r;
+	}
+	
+	
     /**
      *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -259,230 +365,71 @@ public class Scene {
 	
 	// Generate a reflection ray
 	public void generateReflectionRay(Ray reflection_ray, IntersectResult closest_result) {
-		//if(light != null) {
-			Vector3d from_light = new Vector3d(	render.camera.from.x - closest_result.p.x,
-												render.camera.from.y - closest_result.p.y,
-												render.camera.from.z - closest_result.p.z	);
-				from_light.scale(-1);
-				from_light.normalize();
+		Vector3d from_light = new Vector3d(	render.camera.from.x - closest_result.p.x,
+											render.camera.from.y - closest_result.p.y,
+											render.camera.from.z - closest_result.p.z	);
+		from_light.scale(-1);
+		from_light.normalize();
 			
-			Vector3d to_camera = new Vector3d(render.camera.from);
-				to_camera.sub(closest_result.p);
-				to_camera.normalize();
+		Vector3d to_camera = new Vector3d(render.camera.from);
+		to_camera.sub(closest_result.p);
+		to_camera.normalize();
 				
-			reflection_ray.viewDirection = new Vector3d(closest_result.n);
-				reflection_ray.viewDirection.scale(-2.0*from_light.dot(closest_result.n));
-				reflection_ray.viewDirection.add(from_light);
-				reflection_ray.viewDirection.normalize();
-				
-			reflection_ray.eyePoint = new Point3d(closest_result.p);
-		}
-	//}
-	
+		reflection_ray.viewDirection = new Vector3d(closest_result.n);
+		reflection_ray.viewDirection.scale(-2.0*from_light.dot(closest_result.n));
+		reflection_ray.viewDirection.add(from_light);
+		reflection_ray.viewDirection.normalize();
+		reflection_ray.eyePoint = new Point3d(closest_result.p);
 		
-	/**
-     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~SHADING METHODS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
-     */
-	
-	// Diffuse shading
-	public double calculateDiffuse(Light light, IntersectResult closest_result, int shadow) {
-		double diffuse 	= 0;
-		if(light != null) {
-			Vector3d to_light = new Vector3d(	light.from.x - closest_result.p.x,
-												light.from.y - closest_result.p.y,
-												light.from.z - closest_result.p.z	);
-			to_light.normalize();
-			diffuse 	= (this.k_d *light.power*Math.max(0, closest_result.n.dot(to_light)));
+		// Add a little bit of the view direction to the view point
+		reflection_ray.viewDirection.scale(0.01);
+		reflection_ray.eyePoint.add(reflection_ray.viewDirection);
+		reflection_ray.viewDirection.normalize();
 		}
-		return diffuse;
-	}
 	
-	// Specular shading
-	public double calculateSpecular(Light light, IntersectResult closest_result, int shadow) {
-		double specular 	= 0.0;
+	public void generateRefractionRay(Ray ray, Ray refraction_ray, IntersectResult closest_result) {
+			
+			Vector3d temp;
 		
-		if(light != null) {
-			Vector3d from_light = new Vector3d(	light.from.x - closest_result.p.x,
-												light.from.y - closest_result.p.y,
-												light.from.z - closest_result.p.z	);
-				from_light.scale(-1);
-				from_light.normalize();
+			refraction_ray.viewDirection 	= new Vector3d(closest_result.n);
+			refraction_ray.eyePoint 			= new Point3d(closest_result.p);
 			
-			Vector3d to_camera = new Vector3d(render.camera.from);
-				to_camera.sub(closest_result.p);
-				to_camera.normalize();
-				
-			Vector3d reflection_vector = new Vector3d(closest_result.n);
-				reflection_vector.scale(-2.0*from_light.dot(closest_result.n));
-				reflection_vector.add(from_light);
-				reflection_vector.normalize();
+			double cos_i = closest_result.n.dot(ray.viewDirection);
+			double eta = 1/closest_result.material.ior;
 			
-			if(closest_result.material != null)
-				{specular = (this.k_s * light.power * Math.pow(Math.max(0, to_camera.dot(reflection_vector)), closest_result.material.shinyness));}
-			else 
-				{specular = 0;}
-		}
-		return specular;
-	}
-	
-	// Calculate the color for a given intersection
-	public double[] setColor(IntersectResult closest_result, Light light, int shadow, double diffuse, double specular, int i, int j) {
-		double[] color = new double[3];
-		float[] granite_color = new float[3];
-		float r, g, b;
-		
-		if(closest_result.t == Double.POSITIVE_INFINITY) {
-			color[0] = 255*this.k_a*ambient.x/this.lights.size();
-			color[1] = 255*this.k_a*ambient.y/this.lights.size();
-			color[2] = 255*this.k_a*ambient.z/this.lights.size();
-		}
-		else {	
-			
-			if(closest_result.material.name.equals("granite")) {
-				granite_color = makeGranite(closest_result, 0.08, i, j);
-					color[0] = 255 * (	this.k_a *ambient.x	* light.color.x * granite_color[0] 	
-										+ shadow *(diffuse	* light.color.x * granite_color[0]
-										+ specular	* light.color.x * closest_result.material.specular.x)); 
-					color[1] = 255*granite_color[1]*diffuse;
-					color[2] = 255*granite_color[2]*diffuse;
+			if(cos_i < 0) {
+				cos_i *= -1;
+			}
+			else	{
+				eta = 1/eta;
+				refraction_ray.viewDirection.scale(-1);
 			}
 			
-			if(closest_result.material.name.equals("granite")) {
-				granite_color = makeGranite(closest_result, 0.08, i, j);
-				r = granite_color[0];
-				g = granite_color[1];
-				b = granite_color[2];
+			double k = 1 - eta*eta*(1 - cos_i*cos_i);
+			if(k < 0) {
+				refraction_ray.viewDirection 	= new Vector3d(0, 0, 0);
+				refraction_ray.eyePoint 			= new Point3d(0, 0, 0);
 			}
-			
-			
 			else {
-				r = closest_result.material.diffuse.x;
-				g = closest_result.material.diffuse.y;
-				b = closest_result.material.diffuse.z;
+				refraction_ray.viewDirection.scale(eta*cos_i - Math.sqrt(k));
+				temp = new Vector3d(ray.viewDirection);
+				temp.scale(eta);
+				refraction_ray.viewDirection.add(temp);
 			}
 			
-			color[0] = 	255 * (	this.k_a *ambient.x	* light.color.x * r 	
-							+ shadow *(diffuse	* light.color.x * r
-							+ specular	* light.color.x * closest_result.material.specular.x)); 
-		
-			color[1] = 	255 * (	this.k_a *ambient.y* light.color.y * g 	
-							+ shadow *(diffuse	* light.color.y * g
-							+ specular	* light.color.y * closest_result.material.specular.y));
-		
-			color[2] = 	255 * ( this.k_a *ambient.z	* light.color.z * b 	
-							+ shadow *(diffuse	* light.color.z * b
-							+ specular	* light.color.z * closest_result.material.specular.z));
-			
-		}
-		return color;
-	}
+			temp = new Vector3d(refraction_ray.viewDirection);
+			temp.scale(0.01);
+			refraction_ray.eyePoint.add(temp);
+		}	
 	
-
-	/**
-     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     *  ~~~~~~~~~~~~~~~~~~~~~~~~SAMPLING DISTRIBUTIONS~~~~~~~~~~~~~~~~~~~~~~~~~~
-     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	 */
-	
-	// A distribution approximating a circle around each point
-	public static double[] circleDistribution(int sample_number, int samples) {
-		double[] coordinates = new double[2];
 		
-		coordinates[0] = (0.4)* Math.cos( ((double)sample_number/(double)samples) * 2*Math.PI);
-		coordinates[1] = (0.4)* Math.sin( ((double)sample_number/(double)samples) * 2*Math.PI);
-
-		return coordinates;
-	}
-	
-	// A distribution of random noise
-	public static double[] randomDistribution(){
-		double[] coordinates = new double[2];
-		
-		coordinates[0] = 0.001*(2*Math.random()-1);
-		coordinates[1] = 0.001*(2*Math.random()-1);
-		
-		return coordinates;
-		
-	}
-	
-	// A grid distribution with random noise introduced
-	public double[] fuzzyGridDistribution(int sample_number, int samples) {
-		double[] coordinates = new double[2];
-		
-		if(Math.floor(Math.sqrt(samples)) != Math.sqrt(samples)) {
-			System.out.print("\nWhen using the grid distribution the number of samples must be a perfect square!\n");
-			coordinates[0] = 0;
-			coordinates[1] = 0;
-		}
-		else {
-			double side_length = Math.sqrt(samples);
-			coordinates[0] = ((Math.floor((double)(sample_number)/side_length))/(side_length-1) - 0.5) + (Math.random()-0.5)/10;
-			coordinates[1] = (((sample_number%side_length)/(side_length-1)) - 0.5) + (Math.random()-0.5)/10;
-		}
-		
-		if(this.render.samples == 1) {
-			System.out.println("\nCome on, dont super sample with one sample you pussy.\n");
-		}
-		
-		return coordinates;
-	}
-	
-	
     /**
      *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~MISC METHODS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~~~INTERSECTING METHODS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      */
-
-	public float[] makeGranite(IntersectResult closest_result, double num_stripes, int i, int j) {
-		float[] granite_color = new float[3];	
-		
-		float temp = (float) (num_stripes*(i+j) + closest_result.material.turbulence*turbulence(i,j,32)/255);
-		granite_color[0] = (float) (closest_result.material.diffuse.x*Math.abs(Math.sin(temp)));
-		granite_color[1] = (float) (closest_result.material.diffuse.y*Math.abs(Math.sin(temp)));
-		granite_color[2] = (float) (closest_result.material.diffuse.z*Math.abs(Math.sin(temp)));
-						
-		return granite_color;
-	}
-	
-	// Find if something is in a shadow
-	public int inShadow(final Light light, IntersectResult shadowResult, Ray shadowRay) {
-		int in_shadow = 1;
-		Intersectable object;
-		
-		for(int i = 0; i < this.surfaceList.size(); i++){
-			object = this.surfaceList.get(i);
-			
-			if(object.getType().equals("scene_node")) {
-				SceneNode node = (SceneNode)object;
-				
-				for(int j = 0; j < node.children.size(); j++) {
-					node.children.get(j).intersect(shadowRay, shadowResult);
-					if(shadowResult.t != Double.POSITIVE_INFINITY) {
-						in_shadow = 0; 
-						return in_shadow;
-					}
-				}	
-			}
-			else {
-				object.intersect(shadowRay, shadowResult);
-				if(shadowResult.t != Double.POSITIVE_INFINITY) {
-					in_shadow = 0; 
-					return in_shadow;
-				}
-			}
-		}
-		return in_shadow;
-	}  
-	
 	public IntersectResult findClosestIntersection(Ray ray) {
 		double 					min_t 		= Double.POSITIVE_INFINITY;	
 		Intersectable			child		= this.surfaceList.get(0);
@@ -536,6 +483,68 @@ public class Scene {
 		return closest_result;
 	}
 	
+	public int inShadow(final Light light, IntersectResult shadowResult, Ray shadowRay) {
+		int in_shadow = 1;
+		Intersectable object;
+		
+		for(int i = 0; i < this.surfaceList.size(); i++){
+			object = this.surfaceList.get(i);
+			
+			if(object.getType().equals("scene_node")) {
+				SceneNode node = (SceneNode)object;
+				
+				for(int j = 0; j < node.children.size(); j++) {
+					node.children.get(j).intersect(shadowRay, shadowResult);
+					if(shadowResult.t != Double.POSITIVE_INFINITY) {
+						in_shadow = 0; 
+						return in_shadow;
+					}
+				}	
+			}
+			else {
+				object.intersect(shadowRay, shadowResult);
+				if(shadowResult.t != Double.POSITIVE_INFINITY && shadowResult.t > 0) {
+					in_shadow = 0; 
+					return in_shadow;
+				}
+			}
+		}
+		return in_shadow;
+	}  
+	
+	
+	
+    /**
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~PATTERN METHODS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     */
+	public float[] makeGranite(IntersectResult closest_result, double num_stripes, int i, int j) {		
+		float temp = (float) (num_stripes*(i+j) + closest_result.material.turbulence*turbulence(i,j,32)/255);
+		float[] granite_color = new float[]{	(float) (closest_result.material.diffuse.x*Math.abs(Math.sin(temp))),
+											(float) (closest_result.material.diffuse.y*Math.abs(Math.sin(temp))),
+											(float) (closest_result.material.diffuse.z*Math.abs(Math.sin(temp)))	};		
+		return granite_color;
+	}
+	
+	public float[] makeSine(IntersectResult closest_result, double num_stripes) {		
+		float[] sine_color = new float[]{	(float) (closest_result.material.diffuse.x*Math.abs(Math.sin(8*(closest_result.p.x+closest_result.p.y)))),
+											(float) (closest_result.material.diffuse.y*Math.abs(Math.sin(8*(closest_result.p.x+closest_result.p.y)))),
+											(float) (closest_result.material.diffuse.z*Math.abs(Math.sin(8*(closest_result.p.x+closest_result.p.y))))	};		
+		return sine_color;
+	}
+	
+	
+	
+	/**
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~NOISE AND TURBULENCE METHODS~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     */
 	public double smoothNoise(double x, double y){
 	   //get fractional part of x and y
 	   double fractX = x - (int)x;
@@ -577,5 +586,51 @@ public class Scene {
 		}
 	
 		return(128.0 * value / initialSize);
+	}
+	
+	/**
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~SAMPLING DISTRIBUTIONS~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 */
+	public static double[] circleDistribution(int sample_number, int samples, int i, int j) {
+		double[] coordinates = new double[] {(0.4)* Math.cos( ((double)sample_number/(double)samples) * 2*Math.PI), (0.4)* Math.sin( ((double)sample_number/(double)samples) * 2*Math.PI)};
+		return coordinates;
+	}
+	
+	public static double[] randomDistribution(){
+		double[] coordinates = new double[] {0.001*(2*Math.random()-1), 0.001*(2*Math.random()-1)};
+		return coordinates;	
+	}
+	
+	public double[] fuzzyGridDistribution(int sample_number, int samples, int i, int j, int k) {
+		double[] coordinates = new double[2];
+		
+		if(Math.floor(Math.sqrt(samples)) != Math.sqrt(samples) ) {
+			if(i == 0 && j == 0 && k == 0) {
+				System.out.print("\nWhen using the grid distribution the number of samples must be a perfect square!\n");
+				System.out.print("Sampling the center of each pixel as default.");
+			}
+			coordinates[0] = 0;
+			coordinates[1] = 0;
+		}
+		else {
+			double side_length = Math.sqrt(samples);
+			coordinates[0] = ((Math.floor((double)(sample_number)/side_length))/(side_length-1) - 0.5) + (Math.random()-0.5)/10;
+			coordinates[1] = (((sample_number%side_length)/(side_length-1)) - 0.5) + (Math.random()-0.5)/10;
+		}
+		
+		if(this.render.samples == 1) {
+			if(i == 0 && j == 0 && k == 0) {
+				System.out.println("\nCome on, dont super sample with one sample you pussy.\n");
+				System.out.print("Sampling the center of each pixel as default.");
+			}
+			coordinates[0] = 0;
+			coordinates[1] = 0;
+		}
+		
+		return coordinates;
 	}
 }

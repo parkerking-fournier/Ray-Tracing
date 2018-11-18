@@ -295,9 +295,21 @@ public class Parser {
 		    	if ( reflectivenessAttr != null ) {
 		    		material.reflectiveness = Float.parseFloat( reflectivenessAttr.getNodeValue() );
 		    	}
+		    	Node refractivenessAttr = dataNode.getAttributes().getNamedItem("refractiveness");
+		    	if ( refractivenessAttr != null ) {
+		    		material.refractiveness = Float.parseFloat( refractivenessAttr.getNodeValue() );
+		    	}
+		    	Node iorAttr = dataNode.getAttributes().getNamedItem("ior");
+		    	if ( iorAttr != null ) {
+		    		material.ior = Float.parseFloat( iorAttr.getNodeValue() );
+		    	}
 		    	Node turbulenceAttr = dataNode.getAttributes().getNamedItem("turbulence");
 		    	if ( turbulenceAttr != null ) {
 			    		material.turbulence = Float.parseFloat( turbulenceAttr.getNodeValue() );
+		    	}
+		    	Node patternAttr = dataNode.getAttributes().getNamedItem("pattern");
+		    	if ( patternAttr != null ) {
+			    		material.pattern = patternAttr.getNodeValue();
 		    	}
 		}
 		return material;
@@ -404,13 +416,17 @@ public class Parser {
 	 */
 	public static Mesh createMesh(Node dataNode) {
         Mesh mesh = new Mesh();
+       
         mesh.name = dataNode.getAttributes().getNamedItem("name").getNodeValue();
+        
         Node filenameAttr = dataNode.getAttributes().getNamedItem("filename");
         if ( filenameAttr != null ) {
-        	mesh.soup = new PolygonSoup( filenameAttr.getNodeValue() );
-        	if ( !Mesh.meshMap.containsKey(mesh.name) )
-        		Mesh.meshMap.put(mesh.name, mesh);
-        } else {
+        		mesh.soup = new PolygonSoup( filenameAttr.getNodeValue() );
+        		if ( !Mesh.meshMap.containsKey(mesh.name) ) {
+        			Mesh.meshMap.put(mesh.name, mesh);
+        		}
+        } 
+        else {
 			String instance = dataNode.getAttributes().getNamedItem("ref").getNodeValue();
 			Mesh other = Mesh.meshMap.get(instance);
 			if ( other != null ) {

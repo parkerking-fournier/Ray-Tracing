@@ -43,7 +43,6 @@ public class Mesh extends Intersectable {
 		
 		// TODO: Objective 7: ray triangle intersection for meshes
 		for(int i = 0; i < soup.faceList.size(); i++) {
-						
 			int[] face = soup.faceList.get(i);
 			IntersectResult result = new IntersectResult();
 			intersectTriangle(ray, result, face);
@@ -58,85 +57,60 @@ public class Mesh extends Intersectable {
 	}
 	
 	public void intersectTriangle(Ray ray, IntersectResult result, int[] face) {
-		
+				
 		// Points of the triangle
 		Point3d v0 = soup.vertexList.get(face[0]).p;
 		Point3d v1 = soup.vertexList.get(face[1]).p;
 		Point3d v2 = soup.vertexList.get(face[2]).p;
 		
 		// v0 to v1
-		Vector3d e0 = new Vector3d(v1);
-			e0.sub(v0);
-		// v0 to v2
-		Vector3d e1 = new Vector3d(v2);
+		Vector3d e1 = new Vector3d(v1);
 			e1.sub(v0);
+		// v0 to v2
+		Vector3d e2 = new Vector3d(v2);
+			e2.sub(v0);
 		// Normal
 		Vector3d normal = new Vector3d();
-			normal.cross(e0, e1);
+			normal.cross(e1, e2);
 			normal.normalize();
-		
-		// Check if the ray and triangle are parallel
-		boolean flag = true;
-		double e = 0.0001;
-		double n_dot_ray = normal.dot(ray.viewDirection);
-		if( Math.abs(n_dot_ray) < e) {
-			flag = false;
-		}
-		
-		// Check if the triangle is behind the ray
-		Vector3d v_0 = new Vector3d(v0);
-		double d = normal.dot(v_0);
-		Vector3d orig = new Vector3d(ray.eyePoint);
-		double t = (normal.dot(orig) + d)/n_dot_ray;
-		if(t < 0) {
-			flag = false;
-		}
-		
-		// inside out test
-		
-		Point3d point = new Point3d();
-		point.scale(t);
-		point.add(orig);
-		
-		Vector3d C = new Vector3d();
-		
-		// edge 0
-		Vector3d edge_0 = new Vector3d(v1);
-		edge_0.sub(v0);
-		Vector3d vp_0 = new Vector3d(point);
-		vp_0.sub(v0);
-		C.cross(edge_0, vp_0);
-		if(normal.dot(C) < 0) {
-			flag = false;
-		}
-		
-		// edge 1
-		Vector3d edge_1 = new Vector3d(v2);
-		edge_1.sub(v1);
-		Vector3d vp_1 = new Vector3d(point);
-		vp_1.sub(v1);
-		C.cross(edge_1, vp_1);
-		if(normal.dot(C) < 0) {
-			flag = false;
-		}
-		
-		// edge 1
-		Vector3d edge_2 = new Vector3d(v0);
-		edge_1.sub(v2);
-		Vector3d vp_2 = new Vector3d(point);
-		vp_2.sub(v2);
-		C.cross(edge_2, vp_2);
-		if(normal.dot(C) < 0) {
-			flag = false;
-		}
-		
-		if(flag = true) {
-			result.t = t;
-			result.p = new Point3d(point);
-			result.n = new Vector3d(normal);
-			result.material = this.material;
-		}
-		
+			
+		double e = 0.0000001;
+		double t = Double.POSITIVE_INFINITY;
+        Vector3d h = new Vector3d();
+        Vector3d s = new Vector3d();
+        Vector3d q = new Vector3d();
+        double a, f, u, v;
+        		a = f = u = v = 0;
+        	boolean flag = true;
+        
+        	h.cross(ray.viewDirection, e2);
+            a = e1.dot(h);
+            if (a > -e && a < e) {
+                flag = false;    // This ray is parallel to this triangle.
+            }
+            f = 1.0 / a;
+            s.sub(ray.eyePoint, v0);
+            u = f * (s.dot(h));
+            if (u < 0.0 || u > 1.0) {
+            		flag = false;
+            }
+            q.cross(s, e1);
+            v = f * ray.viewDirection.dot(q);
+            if (v < 0.0 || u + v > 1.0) {
+                flag = false;
+            }
+            // At this stage we can compute t to find out where the intersection point is on the line.
+            t = f * e2.dot(q);
+            if (t > e && flag){
+            		result.t = t;
+            		result.n = new Vector3d(normal);
+            		result.p = new Point3d(ray.viewDirection);
+            			result.p.scale(t);
+            			result.p.add(ray.eyePoint);
+            		result.material = this.material;
+            } else{
+                result.t = Double.POSITIVE_INFINITY;
+            }
 	}
 }
 

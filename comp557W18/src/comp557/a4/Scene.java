@@ -73,14 +73,16 @@ public class Scene {
 	    // Loop through each pixel p_i = (i,j)
 	    for ( int i = 0; i < h && !render.isDone(); i++ ) {
 	        for ( int j = 0; j < w && !render.isDone(); j++ ) {	
+	    //for ( int i = 0; i < 1 && !render.isDone(); i++ ) {
+	        //for ( int j = 0; j < 1 && !render.isDone(); j++ ) {	
 	            r = g = b = 0;
 	            	for( int k = 0; k < render.samples; k++) {
-	            			
 	            		// Super sampling
 	            		offset = fuzzyGridDistribution(k, render.samples, i, j, k);
 	       
 	            		// Cast Ray
-	                	generateRay(i, j, offset, cam, ray);
+	                generateRay(i, j, offset, cam, ray);
+	                
 	                	color = cast(ray, old_color, 0, i, j);
 	                	r += color[0];
 	                	g += color[1];
@@ -105,7 +107,7 @@ public class Scene {
     public double[] cast(Ray ray, double[] old_color, int depth, int x, int y) {
     			
 		// Variable declarations
-    		int max_depth 							= 1;
+    		int max_depth 							= 5;
     		int shadow 								= 1;
     		double[] color 							= new double[] {0.0,0.0,0.0};
     		double[] reflected_color  				= new double[] {0.0,0.0,0.0};
@@ -116,7 +118,6 @@ public class Scene {
     		double 	fresnel_reflected				= 1.0;
     		double 	fresnel_refracted				= 0.0;
     		Light light;
-    		Ray shadow_ray							= new Ray();
     		IntersectResult shadow_result			= new IntersectResult();
     	
     		// Reflection depth limit
@@ -126,38 +127,32 @@ public class Scene {
 	    		IntersectResult closest_result = findClosestIntersection(ray);
 	    		
 	    		if(closest_result.t != Double.POSITIVE_INFINITY) {	  
-		    		
-	    			//light = this.lights.get("light0");
-	    			//diffuse = calculateDiffuse(light, closest_result);
-	    			//color[0] = 255*closest_result.material.diffuse.x * diffuse + this.k_a* this.ambient.x;
-		    		//color[1] = 255*closest_result.material.diffuse.y * diffuse + this.k_a* this.ambient.y;
-		    		//color[2] = 255*closest_result.material.diffuse.z * diffuse + this.k_a* this.ambient.z;
-
 		    		// For all lights
 		    		for(int i = 0; i < this.lights.size(); i++) {
 		    			light = this.lights.get("light" + i);
 		    			
 		    			// Cast a reflection_ray;
-					//Ray reflection_ray = new Ray();
-					//generateReflectionRay(reflection_ray, closest_result);
-					//reflected_color=cast(reflection_ray, color, depth+1, x, y);
+					Ray reflection_ray = new Ray();
+					generateReflectionRay(reflection_ray, closest_result);
+					reflected_color=cast(reflection_ray, color, depth+1, x, y);
 					
 					// Cast a refraction_ray;
-					//Ray refraction_ray = new Ray();
-					//generateRefractionRay(ray, refraction_ray, closest_result);
-					//refracted_color=cast(refraction_ray, color, depth+1, x, y);
+					Ray refraction_ray = new Ray();
+					generateRefractionRay(ray, refraction_ray, closest_result);
+					refracted_color=cast(refraction_ray, color, depth+1, x, y);
 		    			
 		    			// Cast a shadow_ray;
-		    			//generateShadowRay(shadow_ray, closest_result.p, light); 
-					//shadow = inShadow(light, shadow_result, shadow_ray);
+		    			Ray shadow_ray = new Ray();
+		    			generateShadowRay(shadow_ray, closest_result.p, light); 
+					shadow = inShadow(light, shadow_result, shadow_ray);
 		    		
 					// Calculate diffuse and specular lighting components
 					diffuse	 = calculateDiffuse	(light, closest_result);
 					specular	 = calculateSpecular	(light, closest_result, shadow);
 					
 					// Calculate the fresnel coefficient for the intersection
-					//fresnel_reflected = calculateFresnel(ray, closest_result);
-					//fresnel_refracted = 1 - fresnel_refracted;
+					fresnel_reflected = calculateFresnel(ray, closest_result);
+					fresnel_refracted = 1 - fresnel_refracted;
 					
 					// Find the color of the closest object
 					object_color = setColor(closest_result, light, shadow, diffuse, specular, x, y);
@@ -179,6 +174,7 @@ public class Scene {
 		    		}
 		    		color[0] /= this.lights.size();
 		    		color[1] /= this.lights.size();
+		    		color[2] /= this.lights.size();
 	    		}
 	    		else {
 	    			color = new double[] {this.ambient.x, this.ambient.y, this.ambient.z };
@@ -316,6 +312,7 @@ public class Scene {
     		Vector3d w = new Vector3d(	cam.from.x - cam.to.x,
     									cam.from.y - cam.to.y,
     									cam.from.z - cam.to.z	);
+    		
     		// create u vector by crossing up and w, making u orthogonal to both w and up
     		u.cross(cam.up, w);
     		v.cross(w, u);

@@ -25,6 +25,9 @@ public class Mesh extends Intersectable {
 	 * The polygon soup.
 	 */
 	public PolygonSoup soup;
+	
+	/** A bounding box to reduce run time  */
+	public Box bounding_box;
 
 	public Mesh() {
 		super();
@@ -38,20 +41,26 @@ public class Mesh extends Intersectable {
 	
 	@Override
 	public void intersect(Ray ray, IntersectResult closest_result) {
+
+		//Intersect with the bounding box
 		
-		closest_result.t = Double.POSITIVE_INFINITY;
 		
-		// TODO: Objective 7: ray triangle intersection for meshes
-		for(int i = 0; i < soup.faceList.size(); i++) {
-			int[] face = soup.faceList.get(i);
-			IntersectResult result = new IntersectResult();
-			intersectTriangle(ray, result, face);
-			
-			if(result.t < closest_result.t) {
-				closest_result.t = result.t;
-				closest_result.p = new Point3d(result.p);
-				closest_result.n = new Vector3d(result.n);
-				closest_result.material = result.material;
+		this.bounding_box.intersect(ray, closest_result);
+		
+		// ray face intersection
+		if(closest_result.t < Double.POSITIVE_INFINITY) {
+			closest_result.t = Double.POSITIVE_INFINITY;
+			for(int i = 0; i < soup.faceList.size(); i++) {
+				int[] face = soup.faceList.get(i);
+				IntersectResult result = new IntersectResult();
+				intersectTriangle(ray, result, face);
+				
+				if(result.t < closest_result.t) {
+					closest_result.t = result.t;
+					closest_result.p = new Point3d(result.p);
+					closest_result.n = new Vector3d(result.n);
+					closest_result.material = result.material;
+				}
 			}
 		}
 	}

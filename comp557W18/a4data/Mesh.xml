@@ -240,8 +240,8 @@
       to      = "0 0 0" 
       up      = "0 1 0" 
       fovy    = "45" 
-      width   = "100" 
-      height  = "100" />
+      width   = "600" 
+      height  = "600" />
   </render> 
  
   <!--_______________________________________________________________________________________________________-->
@@ -250,15 +250,12 @@
   <!--_______________________________________________________________________________________________________-->
   <!--_______________________________________________________________________________________________________-->
    <node name="root" >
-  
-	<plane coeffs="0 1 0 0" >
-      	<material   ref="grey_granite" />
-      	<material2  ref="black" />
-    </plane>
 
-    <mesh name="venus" filename="/Users/parkerkingfournier/Documents/Development/workspace/projects/Ray-Tracing/comp557W18/a4data/frame_210.obj">
-    	<material ref="green" />
-    </mesh> 
+    <node name="mesh1" scale="10 10 10" >
+               <mesh name="attractor" filename="/Users/parkerkingfournier/Documents/Development/workspace/projects/Ray-Tracing/comp557W18/a4data/frame_210.obj">
+                  <material ref="green" />
+              </mesh>
+          </node>
 
   </node>
 

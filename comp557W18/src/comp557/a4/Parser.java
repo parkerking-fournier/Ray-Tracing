@@ -434,6 +434,38 @@ public class Parser {
 			}
         }
         mesh.material = parseMaterial(dataNode, "material");
+        
+        // Make a bounding box
+        double min_x, min_y, min_z, max_x, max_y, max_z;
+        		min_x = min_y = min_z = Double.POSITIVE_INFINITY;
+        		max_x = max_y = max_z = Double.NEGATIVE_INFINITY;
+        		
+        	for(int i = 0; i < mesh.soup.vertexList.size(); i++) {
+        		Point3d point = mesh.soup.vertexList.get(i).p;
+        		
+        		if(point.x < min_x)
+        			min_x = point.x;
+        		
+        		if(point.y < min_y)
+        			min_y = point.y;
+        		
+        		if(point.z < min_z)
+        			min_z = point.z;
+        		
+        		if(point.x > max_x)
+        			max_x = point.x;
+        		
+        		if(point.y > max_y)
+        			max_y = point.y;
+        		
+        		if(point.z > max_z)
+        			max_z = point.z;
+        	}
+        	
+        	mesh.bounding_box = new Box();
+        	mesh.bounding_box.min = new Point3d(min_x, min_y, min_z);
+        	mesh.bounding_box.max = new Point3d(max_x, max_y, max_z);
+        
     	return mesh;    	
 	}
 

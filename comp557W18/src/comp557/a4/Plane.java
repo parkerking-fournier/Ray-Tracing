@@ -54,7 +54,7 @@ public class Plane extends Intersectable{
         r = (-1)*b/m;
         
         position.x = ray.eyePoint.x + r*ray.viewDirection.x;
-        position.y = 0;
+        position.y = -1;
         position.z = ray.eyePoint.z + r*ray.viewDirection.z;
         
         Vector3d to_point = new Vector3d(	position.x - ray.eyePoint.x,

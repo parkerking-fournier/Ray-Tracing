@@ -17,6 +17,12 @@ import javax.vecmath.Vector3d;
  */
 public class Scene {
 	
+	public boolean shading 		= true;
+	public boolean shadows 		= true;
+	public boolean reflection 	= false;
+	public boolean refraction	= false;
+	public boolean fresnel 		= false;
+	
 	public double k_a = 0.8;
 	public double k_d = 1.0;
 	public double k_s = 1.0;
@@ -73,8 +79,6 @@ public class Scene {
 	    // Loop through each pixel p_i = (i,j)
 	    for ( int i = 0; i < h && !render.isDone(); i++ ) {
 	        for ( int j = 0; j < w && !render.isDone(); j++ ) {	
-	    //for ( int i = 0; i < 1 && !render.isDone(); i++ ) {
-	        //for ( int j = 0; j < 1 && !render.isDone(); j++ ) {	
 	            r = g = b = 0;
 	            	for( int k = 0; k < render.samples; k++) {
 	            		// Super sampling
@@ -131,28 +135,48 @@ public class Scene {
 		    		for(int i = 0; i < this.lights.size(); i++) {
 		    			light = this.lights.get("light" + i);
 		    			
+		    			// Calculate diffuse and specular lighting components
+		    			if(this.shading == true) {
+						diffuse	 = calculateDiffuse	(light, closest_result);
+						specular	 = calculateSpecular	(light, closest_result, shadow);
+		    			}
+		    			else {
+		    				diffuse = specular = 0;
+		    			}
+						
+			    		// Cast a shadow_ray;
+		    			if(this.shadows == true) {
+			    			Ray shadow_ray = new Ray();
+			    			generateShadowRay(shadow_ray, closest_result.p, light); 
+						shadow = inShadow(light, shadow_result, shadow_ray);
+		    			}
+		    			else {
+		    				shadow = 1;
+		    			}
+		    			
 		    			// Cast a reflection_ray;
-					Ray reflection_ray = new Ray();
-					generateReflectionRay(reflection_ray, closest_result);
-					reflected_color=cast(reflection_ray, color, depth+1, x, y);
+		    			if(this.reflection == true) {
+		    				Ray reflection_ray = new Ray();
+		    				generateReflectionRay(reflection_ray, closest_result);
+		    				reflected_color=cast(reflection_ray, color, depth+1, x, y);
+		    				System.out.println("Here");
+		    			}
 					
 					// Cast a refraction_ray;
-					Ray refraction_ray = new Ray();
-					generateRefractionRay(ray, refraction_ray, closest_result);
-					refracted_color=cast(refraction_ray, color, depth+1, x, y);
+		    			if(this.refraction ==  true) {
+						Ray refraction_ray = new Ray();
+						generateRefractionRay(ray, refraction_ray, closest_result);
+						refracted_color=cast(refraction_ray, color, depth+1, x, y);
+		    			}
 		    			
-		    			// Cast a shadow_ray;
-		    			Ray shadow_ray = new Ray();
-		    			generateShadowRay(shadow_ray, closest_result.p, light); 
-					shadow = inShadow(light, shadow_result, shadow_ray);
-		    		
-					// Calculate diffuse and specular lighting components
-					diffuse	 = calculateDiffuse	(light, closest_result);
-					specular	 = calculateSpecular	(light, closest_result, shadow);
-					
 					// Calculate the fresnel coefficient for the intersection
-					fresnel_reflected = calculateFresnel(ray, closest_result);
-					fresnel_refracted = 1 - fresnel_refracted;
+		    			if(this.fresnel == true) {
+						fresnel_reflected = calculateFresnel(ray, closest_result);
+						fresnel_refracted = 1 - fresnel_refracted;
+		    			}
+		    			else {
+		    				fresnel_reflected = fresnel_refracted = 1;
+		    			}
 					
 					// Find the color of the closest object
 					object_color = setColor(closest_result, light, shadow, diffuse, specular, x, y);
@@ -172,6 +196,7 @@ public class Scene {
 
 					
 		    		}
+		    		// Average over all lights, iteratively
 		    		color[0] /= this.lights.size();
 		    		color[1] /= this.lights.size();
 		    		color[2] /= this.lights.size();
@@ -362,6 +387,7 @@ public class Scene {
 	
 	// Generate a reflection ray
 	public void generateReflectionRay(Ray reflection_ray, IntersectResult closest_result) {
+		
 		Vector3d from_light = new Vector3d(	render.camera.from.x - closest_result.p.x,
 											render.camera.from.y - closest_result.p.y,
 											render.camera.from.z - closest_result.p.z	);
@@ -438,7 +464,7 @@ public class Scene {
 		for(int i = 0; i < this.surfaceList.size(); i++) {
 			
 			//Get the i'th object
-			object = this.surfaceList.get(i);
+			object = this.surfaceList.get(i);	
 			
 			//find the intersection
 			object.intersect(ray, result);
@@ -461,9 +487,12 @@ public class Scene {
 				for(int j = 0; j < node.children.size(); j++) {
 										
 					child = node.children.get(j);
-					child.intersect(ray, result);
 					
-					if(result.t < min_t) {
+					if(!child.getType().equals("mesh")){
+						child.intersect(ray, result);
+					}
+
+					if(result.t < min_t && !child.getType().equals("mesh")) {
 						object 					= child;
 						min_t 					= result.t;
 						closest_result.t	 		= result.t;
@@ -474,9 +503,10 @@ public class Scene {
 				}
 				if(min_t == temp) {
 					break;
-				}
+				}				
 			}
 		}
+		
 		return closest_result;
 	}
 	

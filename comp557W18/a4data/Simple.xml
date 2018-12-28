@@ -52,7 +52,7 @@
     diffuse         = "0 0 0"             
     specular        = "1 1 1"        
     hardness        = "100"   
-    reflectiveness  = "0"      
+    reflectiveness  = "0.7"      
     refractiveness  = "0.0"
     ior             = "0.0"
     turbulence      = "0.0"
@@ -231,7 +231,7 @@
     reflectiveness  = "0.0"      
     refractiveness  = "0.0"
     ior             = "0.0"
-    turbulence      = "11.0"
+    turbulence      = "20.0"
     pattern         = "granite" />
 
 
@@ -240,15 +240,15 @@
   <!--_________________________________________RENDER CONFIGURATIONS_________________________________________-->
   <!--_______________________________________________________________________________________________________-->
   <!--_______________________________________________________________________________________________________-->
-  <render bgcolor="0 0 0" output="TwoSpheresPlane.png" samples="16" >
+  <render bgcolor="0 0 0" output="TwoSpheresPlane.png" samples="1" >
     <camera 
       name    = "myCamera" 
       from    = "0 4 10" 
       to      = "0 0 0" 
       up      = "0 1 0" 
       fovy    = "45" 
-      width   = "800" 
-      height  = "550" />
+      width   = "300" 
+      height  = "175" />
   </render> 
  
   <!--_______________________________________________________________________________________________________-->
@@ -256,55 +256,25 @@
   <!--_____________________________________________SCENE OBJECTS_____________________________________________-->
   <!--_______________________________________________________________________________________________________-->
   <!--_______________________________________________________________________________________________________-->
-   <node name="root" >
-    <sphere center="-3 1 -0.5" radius="1" >
-      <material   ref="silver" />
-    </sphere>
+  <node name="root" >
+    
+     <!-- -->
+    <node name="mesh1" scale="0.008 0.008 0.008" translation="0 0 0"> -->
+      <mesh name="attractor" filename="/Users/parkerkingfournier/Documents/Development/workspace/projects/Ray-Tracing/comp557W18/a4data/city.obj">
+        <material ref="orange" />
+      </mesh>
+    </node> 
+    -->
 
-    <sphere center="2.2 1 3.0" radius="1.0" >
-      <material   ref="water" />
-    </sphere>
-  
-    <plane coeffs="0 1 0 0" >
-      <material   ref="grey" />
-      <material2  ref="light_blue" />
-    </plane> 
-   
-    <node name="box1" translation="3.3 0 -1.2" rotation="0 125 0" scale="2.0 1.6 0.5" >
-      <box min="-1 0 -1" max="1 2 1">
-        <material ref="gold" />
-      </box>
+    <!-- -->
+    <node name="plane1" >
+      <plane coeffs="0 1 0 0" >
+        <material   ref="black" />
+        <material2  ref="grey" />
+      </plane> 
     </node>
+     -->
 
-     <node name="box2" translation="994.5 0 -1012" rotation="0 0 0" scale="1000.0 1.0 1000.0" >
-      <box min="-1 0 -1" max="1 2 1">
-        <material ref="clear_red" />
-      </box>
-    </node>
-
-     <node name="box3" translation="-1005.5 0 -100" rotation="0 0 0" scale="1000.0 1.0 1000.0" >
-      <box min="-1 0 -1" max="1 2 1">
-        <material ref="clear_red" />
-      </box>
-    </node>
-
-    <node name="boxStack" rotation="0 30 0" translation="0 0 1" >
-      <node name="box4" >
-        <box min="-1 0 -1" max="1 2 1">
-          <material ref="lavender" />
-        </box>
-        <node name="box5" translation="0 2 0" rotation="0 12 0" scale="0.5 0.5 0.5" >
-          <box min="-1 0 -1" max="1 2 1">
-            <material ref="grey_granite" />
-          </box>
-          <node name="mesh1" translation="0 2.2 0" rotation="0 0 0" scale="0.6 0.6 0.6" >
-               <mesh name="venus" filename="/Users/parkerkingfournier/Documents/Development/workspace/projects/Ray-Tracing/comp557W18/a4data/torus.obj">
-                  <material ref="green" />
-              </mesh>
-          </node>
-        </node>
-      </node>
-    </node>
   </node>
 
 </scene>

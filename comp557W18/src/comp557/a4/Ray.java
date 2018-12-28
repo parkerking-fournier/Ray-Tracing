@@ -31,7 +31,7 @@ public class Ray {
 	 * @param eyePoint
 	 * @param viewDirection
 	 */
-	public Ray( Point3d eyePoint, Vector3d viewDirection ) {
+	public Ray( Point3d eyePoint, Vector3d viewDirection) {
 		this.eyePoint.set(eyePoint);
 		this.viewDirection.set(viewDirection);
 	}
@@ -41,7 +41,7 @@ public class Ray {
 	 * @param eyePoint
 	 * @param viewDirection
 	 */
-	public void set( Point3d eyePoint, Vector3d viewDirection ) {
+	public void set( Point3d eyePoint, Vector3d viewDirection, String type ) {
 		this.eyePoint.set(eyePoint);
 		this.viewDirection.set(viewDirection);
 	}

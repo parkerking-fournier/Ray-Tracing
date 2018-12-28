@@ -42,10 +42,16 @@ public class Mesh extends Intersectable {
 	@Override
 	public void intersect(Ray ray, IntersectResult closest_result) {
 
+		//Inside the bounding box
+		if(		ray.eyePoint.x > this.bounding_box.min.x && ray.eyePoint.x < this.bounding_box.max.x && 
+				ray.eyePoint.y > this.bounding_box.min.x && ray.eyePoint.y < this.bounding_box.max.y &&	
+				ray.eyePoint.z > this.bounding_box.min.x && ray.eyePoint.z < this.bounding_box.max.z ) {
+			closest_result.t = 1;
+		}
 		//Intersect with the bounding box
-		
-		
-		this.bounding_box.intersect(ray, closest_result);
+		else {
+			this.bounding_box.intersect(ray, closest_result);
+		}
 		
 		// ray face intersection
 		if(closest_result.t < Double.POSITIVE_INFINITY) {
@@ -93,33 +99,34 @@ public class Mesh extends Intersectable {
         	boolean flag = true;
         
         	h.cross(ray.viewDirection, e2);
-            a = e1.dot(h);
-            if (a > -e && a < e) {
-                flag = false;    // This ray is parallel to this triangle.
-            }
-            f = 1.0 / a;
-            s.sub(ray.eyePoint, v0);
-            u = f * (s.dot(h));
-            if (u < 0.0 || u > 1.0) {
-            		flag = false;
-            }
-            q.cross(s, e1);
-            v = f * ray.viewDirection.dot(q);
-            if (v < 0.0 || u + v > 1.0) {
-                flag = false;
-            }
-            // At this stage we can compute t to find out where the intersection point is on the line.
-            t = f * e2.dot(q);
-            if (t > e && flag){
-            		result.t = t;
-            		result.n = new Vector3d(normal);
-            		result.p = new Point3d(ray.viewDirection);
-            			result.p.scale(t);
-            			result.p.add(ray.eyePoint);
-            		result.material = this.material;
-            } else{
-                result.t = Double.POSITIVE_INFINITY;
-            }
+        a = e1.dot(h);
+        if (a > -e && a < e) {
+            flag = false;    // This ray is parallel to this triangle.
+        }
+        f = 1.0 / a;
+        s.sub(ray.eyePoint, v0);
+        u = f * (s.dot(h));
+        if (u < 0.0 || u > 1.0) {
+        		flag = false;
+        }
+        q.cross(s, e1);
+        v = f * ray.viewDirection.dot(q);
+        if (v < 0.0 || u + v > 1.0) {
+            flag = false;
+        }
+        // At this stage we can compute t to find out where the intersection point is on the line.
+        t = f * e2.dot(q);
+        if (t > e && flag){
+        		result.t = t;
+        		result.n = new Vector3d(normal);
+        		result.p = new Point3d(ray.viewDirection);
+          		result.p.scale(t);
+        			result.p.add(ray.eyePoint);
+        		result.material = this.material;
+          } 
+        else{
+        		result.t = Double.POSITIVE_INFINITY;
+        }        
 	}
 }
 

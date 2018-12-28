@@ -233,15 +233,15 @@
   <!--_________________________________________RENDER CONFIGURATIONS_________________________________________-->
   <!--_______________________________________________________________________________________________________-->
   <!--_______________________________________________________________________________________________________-->
-  <render bgcolor="0 0 0" output="TwoSpheresPlane.png" samples="1" >
+  <render bgcolor="0 0 0" output="TwoSpheresPlane.png" samples="4" >
     <camera 
       name    = "myCamera" 
       from    = "0 2 7" 
       to      = "0 0 0" 
       up      = "0 1 0" 
       fovy    = "45" 
-      width   = "600" 
-      height  = "600" />
+      width   = "1000" 
+      height  = "700" />
   </render> 
  
   <!--_______________________________________________________________________________________________________-->
@@ -251,7 +251,7 @@
   <!--_______________________________________________________________________________________________________-->
    <node name="root" >
 
-    <node name="mesh1" scale="10 10 10" >
+    <node name="mesh1" scale="5 5 5" >
                <mesh name="attractor" filename="/Users/parkerkingfournier/Documents/Development/workspace/projects/Ray-Tracing/comp557W18/a4data/frame_210.obj">
                   <material ref="green" />
               </mesh>

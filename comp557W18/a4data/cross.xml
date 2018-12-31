@@ -103,6 +103,17 @@
     pattern         = "sine" />
 
   <material 
+    name            = "turb_red"          
+    diffuse         = "1 0 0"             
+    specular        = "0.5 0.5 0.5"  
+    hardness        = "100"   
+    reflectiveness  = "0"      
+    refractiveness  = "0.0"
+    ior             = "0.0"
+    turbulence      = "2.0"
+    pattern         = "pattern" />
+
+      <material 
     name            = "red"          
     diffuse         = "1 0 0"             
     specular        = "0.5 0.5 0.5"  
@@ -258,8 +269,8 @@
   <!--_______________________________________________________________________________________________________-->
   <node name="root" >
     
-     <!-- -->
-    <node name="mesh1" scale="1 1 1" translation="0 2 0"> -->
+     <!--
+    <node name="mesh1" scale="1 1 1" translation="0 2 0">
       <mesh name="attractor" filename="/Users/parkerkingfournier/Documents/Development/workspace/projects/Ray-Tracing/comp557W18/a4data/tree.obj">
         <material ref="grey" />
       </mesh>
@@ -269,8 +280,8 @@
     <!-- -->
     <node name="plane1" >
       <plane>
-        <material   ref="red" />
-        <material2  ref="light_red" />
+        <material   ref="turb_red" />
+        <material2  ref="turb_red" />
       </plane> 
     </node>
      -->

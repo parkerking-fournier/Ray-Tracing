@@ -1,5 +1,7 @@
 package comp557.a4;
 
+import java.util.ArrayList;
+
 /**
  *	COMP 557 - Winter 2018
  *	Assignment 4
@@ -59,7 +61,25 @@ public class Mesh extends Intersectable {
 			for(int i = 0; i < soup.faceList.size(); i++) {
 				int[] face = soup.faceList.get(i);
 				IntersectResult result = new IntersectResult();
-				intersectTriangle(ray, result, face);
+				
+				if(face.length == 3) {
+					intersectTriangle(ray, result, face);
+				}
+				else if(face.length == 4){
+					int[] face_1 = new int[] {soup.faceList.get(i)[0], soup.faceList.get(i)[1], soup.faceList.get(i)[2]};
+					int[] face_2 = new int[] {soup.faceList.get(i)[2], soup.faceList.get(i)[3], soup.faceList.get(i)[0]};
+					
+					IntersectResult result_1 = new IntersectResult();
+					IntersectResult result_2 = new IntersectResult();
+					
+					intersectTriangle(ray, result_1, face_1);
+					intersectTriangle(ray, result_2, face_2);
+					
+					result = result_1;
+					if(result_1.t == Double.POSITIVE_INFINITY){
+						result = result_2;
+					}
+				}
 				
 				if(result.t < closest_result.t) {
 					closest_result.t = result.t;

@@ -259,18 +259,18 @@
   <node name="root" >
     
      <!-- -->
-    <node name="mesh1" scale="6 6 6" rotation="0 0 90" translation="0 2 4"> -->
-      <mesh name="attractor" filename="/Users/parkerkingfournier/Documents/Development/workspace/projects/Ray-Tracing/comp557W18/a4data/frame_210.obj">
-        <material ref="green" />
+    <node name="mesh1" scale="1 1 1" translation="0 2 0"> -->
+      <mesh name="attractor" filename="/Users/parkerkingfournier/Documents/Development/workspace/projects/Ray-Tracing/comp557W18/a4data/tree.obj">
+        <material ref="grey" />
       </mesh>
     </node> 
     -->
 
     <!-- -->
     <node name="plane1" >
-      <plane coeffs="0 1 0 0" >
-        <material   ref="black" />
-        <material2  ref="grey" />
+      <plane>
+        <material   ref="red" />
+        <material2  ref="light_red" />
       </plane> 
     </node>
      -->

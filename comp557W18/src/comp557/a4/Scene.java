@@ -18,7 +18,7 @@ import javax.vecmath.Vector3d;
 public class Scene {
 	
 	public boolean shading 		= true;
-	public boolean shadows 		= true;
+	public boolean shadows 		= false;
 	public boolean reflection 	= false;
 	public boolean refraction	= false;
 	public boolean fresnel 		= false;
@@ -650,10 +650,6 @@ public class Scene {
 		}
 		
 		if(this.render.samples == 1) {
-			if(i == 0 && j == 0 && k == 0) {
-				System.out.println("\nCome on, dont super sample with one sample you pussy.\n");
-				System.out.print("Sampling the center of each pixel as default.");
-			}
 			coordinates[0] = 0;
 			coordinates[1] = 0;
 		}

@@ -44,11 +44,13 @@ public class Mesh extends Intersectable {
 	@Override
 	public void intersect(Ray ray, IntersectResult closest_result) {
 
+
+		
 		//Inside the bounding box
 		if(		ray.eyePoint.x > this.bounding_box.min.x && ray.eyePoint.x < this.bounding_box.max.x && 
 				ray.eyePoint.y > this.bounding_box.min.x && ray.eyePoint.y < this.bounding_box.max.y &&	
 				ray.eyePoint.z > this.bounding_box.min.x && ray.eyePoint.z < this.bounding_box.max.z ) {
-			closest_result.t = 1;
+			closest_result.t = 1;			
 		}
 		//Intersect with the bounding box
 		else {

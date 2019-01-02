@@ -51,7 +51,7 @@ public class A4App extends JFrame implements Runnable {
 	public A4App() {}
 	
 	public void openSceneList(){
-		File folder = new File("/Users/parkerkingfournier/Documents/Development/workspace/projects/Ray-Tracing/comp557W18/a4data");
+		File folder = new File("C:\\Users\\pkingfournier\\Documents\\Personal\\Ray-Tracing\\Ray-Tracing\\comp557W18\\a4data");
 		final File[] listOfFiles = folder.listFiles(new FilenameFilter() {
 			@Override
 			public boolean accept(File arg0, String arg1) {
@@ -106,7 +106,7 @@ public class A4App extends JFrame implements Runnable {
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
 			Document document = builder.parse( inputStream );
-			
+
 			long pstart = System.nanoTime();
 
 			Scene scene = Parser.createScene( document.getDocumentElement() );

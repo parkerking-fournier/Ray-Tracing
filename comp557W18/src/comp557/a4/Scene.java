@@ -235,6 +235,9 @@ public class Scene {
 		else	 if(closest_result.material.pattern.equals("checker")) {
 			rgb = makeChecker(closest_result, i, j);
 		}
+		else	 if(closest_result.material.pattern.equals("pattern")) {
+			rgb = makePattern(closest_result, i, j);
+		}
 		else{
 			rgb = new float[] {closest_result.material.diffuse.x, closest_result.material.diffuse.y, closest_result.material.diffuse.z};
 		}
@@ -568,11 +571,31 @@ public class Scene {
 	public float[] makeChecker(IntersectResult closest_result, int i, int j) {	
 			
 		float temp = (float) ( closest_result.material.turbulence*turbulence(i,j,32)/255);
+		if(closest_result.material.turbulence == 0){
+			temp = 1;
+		}
 		
-		double square = (Math.abs(Math.floor(temp*closest_result.p.x)) % 2) * (Math.abs(Math.floor(temp*closest_result.p.z)) % 2);
-		float[] sine_color = new float[]{	(float) (closest_result.material.diffuse.x * square),
-											(float) (closest_result.material.diffuse.y * square),
-											(float) (closest_result.material.diffuse.z * square)	};		
+		double pattern = (Math.abs(Math.floor(temp*closest_result.p.x)) % 2) * (Math.abs(Math.floor(temp*closest_result.p.z)) % 2);
+		float[] sine_color = new float[]{	(float) (closest_result.material.diffuse.x * pattern),
+											(float) (closest_result.material.diffuse.y * pattern),
+											(float) (closest_result.material.diffuse.z * pattern)	};		
+		return sine_color;
+	}
+	
+	// Temporary color pattern - calculates color as a function of position
+	public float[] makePattern(IntersectResult closest_result, int i, int j) {	
+		
+		double x = Math.abs(closest_result.p.x);
+		double z = Math.abs(closest_result.p.z);
+
+		float temp = (float) ( closest_result.material.turbulence*turbulence(i,j,32)/255);
+		if(closest_result.material.turbulence == 0){
+			temp = 1;
+		}
+		
+		float[] sine_color = new float[]{	(float) (Math.min(1, x*temp)),
+											(float) (Math.min(1, temp/x)),
+											(float) (1)};		
 		return sine_color;
 	}
 	

@@ -49,7 +49,7 @@
 
   <material 
     name            = "black"        
-    diffuse         = "0 0 0"             
+    diffuse         = "0 0.1 0"             
     specular        = "1 1 1"        
     hardness        = "100"   
     reflectiveness  = "0.7"      
@@ -71,7 +71,7 @@
 
   <material 
     name            = "grey"         
-    diffuse         = "0.3 0.3 0.3"       
+    diffuse         = "0.3 0.5 0.3"       
     specular        = "1 1 1"        
     hardness        = "100"   
     reflectiveness  = "0.0"    
@@ -240,15 +240,15 @@
   <!--_________________________________________RENDER CONFIGURATIONS_________________________________________-->
   <!--_______________________________________________________________________________________________________-->
   <!--_______________________________________________________________________________________________________-->
-  <render bgcolor="0 0 0" output="TwoSpheresPlane.png" samples="1" >
+  <render bgcolor="0 0 0" output="TwoSpheresPlane.png" samples="9" >
     <camera 
       name    = "myCamera" 
       from    = "0 4 10" 
       to      = "0 0 0" 
       up      = "0 1 0" 
       fovy    = "45" 
-      width   = "500" 
-      height  = "300" />
+      width   = "1000" 
+      height  = "600" />
   </render> 
  
   <!--_______________________________________________________________________________________________________-->
@@ -259,9 +259,9 @@
   <node name="root" >
     
      <!-- -->
-    <node name="mesh1" scale="6 6 6" rotation="0 0 90" translation="0 2 4"> -->
-      <mesh name="attractor" filename="/Users/parkerkingfournier/Documents/Development/workspace/projects/Ray-Tracing/comp557W18/a4data/frame_210.obj">
-        <material ref="green" />
+    <node name="mesh1" scale="0.01 0.01 0.01" rotation="0 0 90" translation="0 2 4"> -->
+      <mesh name="attractor" filename="C:\Users\pkingfournier\Documents\Personal\Ray-Tracing\Ray-Tracing\comp557W18\a4data\rock.obj">
+        <material ref="grey_granite" />
       </mesh>
     </node> 
     -->
